@@ -1,0 +1,1 @@
+TurtleBot 4 navigating the lab environment using Ouster LiDAR and VectorNav IMU. Students in EECE 5550 Mobile Robotics build SLAM and path planning pipelines for autonomous navigation.

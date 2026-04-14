@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab Showcase</title>
+<style>
+  /* ── Reset & base ─────────────────────────────────────────── */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --nu-red: #C8102E;
+    --nu-dark: #0A0A0A;
+    --nu-white: #F5F5F5;
+    --accent: var(--nu-red);
+    --font-display: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    --font-body: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    --slide-transition: 1.2s;
+  }
+
+  html, body {
+    width: 100vw; height: 100vh;
+    overflow: hidden;
+    background: var(--nu-dark);
+    color: var(--nu-white);
+    font-family: var(--font-body);
+    cursor: none;              /* hide cursor on big screen */
+    user-select: none;
+  }
+
+  /* ── Slide container ──────────────────────────────────────── */
+  #showcase {
+    position: fixed; inset: 0;
+    background: var(--nu-dark);
+  }
+
+  .slide {
+    position: absolute; inset: 0;
+    opacity: 0;
+    transition: opacity var(--slide-transition) ease-in-out;
+    z-index: 1;
+  }
+  .slide.active {
+    opacity: 1;
+    z-index: 2;
+  }
+
+  /* ── Media (photo / video) ────────────────────────────────── */
+  .slide img,
+  .slide video {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    background: var(--nu-dark);
+  }
+
+  /* ── Bottom overlay ───────────────────────────────────────── */
+  .slide-overlay {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 80px 60px 48px;
+    background: linear-gradient(
+      to top,
+      rgba(0,0,0,0.88) 0%,
+      rgba(0,0,0,0.60) 50%,
+      rgba(0,0,0,0.00) 100%
+    );
+    z-index: 3;
+  }
+
+  .slide-accent {
+    display: inline-block;
+    width: 48px; height: 4px;
+    background: var(--accent);
+    border-radius: 2px;
+    margin-bottom: 16px;
+  }
+
+  .slide-title {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 4vw, 56px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 12px;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.6);
+  }
+
+  .slide-description {
+    font-size: clamp(14px, 1.6vw, 22px);
+    line-height: 1.55;
+    max-width: 800px;
+    opacity: 0.88;
+    text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+  }
+
+  .slide-meta {
+    margin-top: 10px;
+    font-size: clamp(11px, 1vw, 15px);
+    opacity: 0.45;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── Top bar: logo / clock ────────────────────────────────── */
+  #topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 40px;
+    z-index: 10;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.50) 0%,
+      rgba(0,0,0,0.0) 100%
+    );
+  }
+
+  #lab-name {
+    font-family: var(--font-display);
+    font-size: clamp(14px, 1.5vw, 20px);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+  #lab-name span { color: var(--accent); }
+
+  #clock {
+    font-family: var(--font-display);
+    font-size: clamp(14px, 1.5vw, 20px);
+    font-weight: 300;
+    opacity: 0.5;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Progress bar ─────────────────────────────────────────── */
+  #progress-track {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    z-index: 20;
+  }
+  #progress-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: width 0.3s linear;
+  }
+
+  /* ── Slide counter ────────────────────────────────────────── */
+  #counter {
+    position: fixed;
+    bottom: 20px; right: 40px;
+    font-size: clamp(12px, 1.2vw, 16px);
+    opacity: 0.35;
+    z-index: 20;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Empty state ──────────────────────────────────────────── */
+  #empty-state {
+    display: none;
+    position: fixed; inset: 0;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 5;
+    padding: 40px;
+  }
+  #empty-state.visible { display: flex; }
+
+  #empty-state h1 {
+    font-family: var(--font-display);
+    font-size: clamp(24px, 3vw, 42px);
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+  #empty-state p {
+    font-size: clamp(14px, 1.4vw, 20px);
+    opacity: 0.55;
+    max-width: 560px;
+    line-height: 1.6;
+  }
+  #empty-state code {
+    display: inline-block;
+    background: rgba(255,255,255,0.08);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.95em;
+  }
+  .folder-hint {
+    margin-top: 32px;
+    display: flex; gap: 24px;
+    flex-wrap: wrap; justify-content: center;
+  }
+  .folder-hint div {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 16px 24px;
+    text-align: left;
+    min-width: 180px;
+  }
+  .folder-hint div strong {
+    display: block;
+    color: var(--accent);
+    margin-bottom: 4px;
+    font-size: 0.95em;
+  }
+  .folder-hint div span {
+    font-size: 0.82em;
+    opacity: 0.5;
+  }
+
+  /* ── Pause indicator ──────────────────────────────────────── */
+  #pause-badge {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    border-radius: 16px;
+    padding: 20px 36px;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 30;
+    pointer-events: none;
+  }
+  #pause-badge.visible {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  /* ── Animations ───────────────────────────────────────────── */
+  @keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+  .slide.active .slide-overlay {
+    animation: slideUp 0.8s ease-out 0.4s both;
+  }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div id="topbar">
+  <div id="lab-name"><span>●</span> Lab Showcase</div>
+  <div id="clock"></div>
+</div>
+
+<!-- Slide container -->
+<div id="showcase"></div>
+
+<!-- Empty state -->
+<div id="empty-state">
+  <h1>Welcome to the Lab Showcase</h1>
+  <p>Add media files to the folders below, then refresh this page.</p>
+  <div class="folder-hint">
+    <div><strong>/photos/</strong><span>.jpg .png .webp</span></div>
+    <div><strong>/videos/</strong><span>.mp4 .webm</span></div>
+    <div><strong>/words/</strong><span>.txt descriptions</span></div>
+  </div>
+</div>
+
+<!-- Progress bar -->
+<div id="progress-track"><div id="progress-bar"></div></div>
+<div id="counter"></div>
+
+<!-- Pause badge -->
+<div id="pause-badge">⏸ Paused</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIGURATION — edit these if you want
+// ═══════════════════════════════════════════════════════════
+const CONFIG = {
+  refreshMinutes: 2,                // re-scan folders every N minutes
+};
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let slides = [];
+let currentIndex = -1;
+let interval = 8;          // seconds per photo slide (from server)
+let paused = false;
+let timer = null;
+let progressTimer = null;
+let progressStart = 0;
+let progressDuration = 0;
+
+const $showcase  = document.getElementById("showcase");
+const $empty     = document.getElementById("empty-state");
+const $progress  = document.getElementById("progress-bar");
+const $counter   = document.getElementById("counter");
+const $pause     = document.getElementById("pause-badge");
+const $clock     = document.getElementById("clock");
+const $labName   = document.getElementById("lab-name");
+
+// ═══════════════════════════════════════════════════════════
+// FETCH CONTENT
+// ═══════════════════════════════════════════════════════════
+async function fetchSlides() {
+  try {
+    const resp = await fetch("/api/slides?t=" + Date.now());
+    const data = await resp.json();
+    interval = data.interval || 8;
+
+    // Update title from server
+    if (data.title) {
+      $labName.innerHTML = `<span>●</span> ${data.title}`;
+      document.title = data.title;
+    }
+
+    // Check if content actually changed
+    const newJSON = JSON.stringify(data.slides);
+    const oldJSON = JSON.stringify(slides);
+    if (newJSON !== oldJSON) {
+      slides = data.slides;
+      buildSlides();
+      if (currentIndex < 0 || currentIndex >= slides.length) {
+        currentIndex = -1;
+        showNext();
+      }
+    }
+  } catch (e) {
+    console.warn("Could not fetch slides:", e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// BUILD DOM
+// ═══════════════════════════════════════════════════════════
+function buildSlides() {
+  $showcase.innerHTML = "";
+
+  if (slides.length === 0) {
+    $empty.classList.add("visible");
+    $counter.textContent = "";
+    return;
+  }
+  $empty.classList.remove("visible");
+
+  slides.forEach((s, i) => {
+    const div = document.createElement("div");
+    div.className = "slide";
+    div.dataset.index = i;
+
+    // Media element
+    if (s.type === "video") {
+      const vid = document.createElement("video");
+      vid.src = s.src;
+      vid.muted = true;
+      vid.loop = false;
+      vid.playsInline = true;
+      vid.preload = "auto";
+      vid.addEventListener("ended", () => { if (!paused) showNext(); });
+      div.appendChild(vid);
+    } else {
+      const img = document.createElement("img");
+      img.src = s.src;
+      img.alt = s.title;
+      img.loading = (i < 2) ? "eager" : "lazy";
+      div.appendChild(img);
+    }
+
+    // Overlay
+    const overlay = document.createElement("div");
+    overlay.className = "slide-overlay";
+    overlay.innerHTML = `
+      <div class="slide-accent"></div>
+      <div class="slide-title">${escapeHtml(s.title)}</div>
+      ${s.description ? `<div class="slide-description">${escapeHtml(s.description)}</div>` : ""}
+      <div class="slide-meta">${s.type === "video" ? "▶ Video" : "Photo"} · ${i + 1} / ${slides.length}</div>
+    `;
+    div.appendChild(overlay);
+
+    $showcase.appendChild(div);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// SLIDE NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function showNext() {
+  if (slides.length === 0) return;
+  currentIndex = (currentIndex + 1) % slides.length;
+  activateSlide(currentIndex);
+}
+
+function showPrev() {
+  if (slides.length === 0) return;
+  currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+  activateSlide(currentIndex);
+}
+
+function activateSlide(index) {
+  clearTimeout(timer);
+  cancelAnimationFrame(progressTimer);
+
+  const allSlides = $showcase.querySelectorAll(".slide");
+  allSlides.forEach(s => {
+    s.classList.remove("active");
+    const vid = s.querySelector("video");
+    if (vid) { vid.pause(); vid.currentTime = 0; }
+  });
+
+  const slide = allSlides[index];
+  if (!slide) return;
+  slide.classList.add("active");
+
+  // Counter
+  $counter.textContent = `${index + 1} / ${slides.length}`;
+
+  const data = slides[index];
+  const vid = slide.querySelector("video");
+
+  if (data.type === "video" && vid) {
+    vid.play().catch(() => {});
+    // For videos, progress tracks video duration (estimated)
+    // The "ended" event will trigger showNext
+    startProgress(vid.duration || interval);
+  } else {
+    startProgress(interval);
+    if (!paused) {
+      timer = setTimeout(showNext, interval * 1000);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// PROGRESS BAR
+// ═══════════════════════════════════════════════════════════
+function startProgress(duration) {
+  progressStart = performance.now();
+  progressDuration = duration * 1000;
+  $progress.style.transition = "none";
+  $progress.style.width = "0%";
+
+  function tick() {
+    if (paused) { progressTimer = requestAnimationFrame(tick); return; }
+    const elapsed = performance.now() - progressStart;
+    const pct = Math.min((elapsed / progressDuration) * 100, 100);
+    $progress.style.width = pct + "%";
+    if (pct < 100) progressTimer = requestAnimationFrame(tick);
+  }
+  progressTimer = requestAnimationFrame(tick);
+}
+
+// ═══════════════════════════════════════════════════════════
+// PAUSE / PLAY
+// ═══════════════════════════════════════════════════════════
+function togglePause() {
+  paused = !paused;
+  $pause.classList.toggle("visible", paused);
+
+  if (paused) {
+    clearTimeout(timer);
+    const vid = $showcase.querySelector(".slide.active video");
+    if (vid) vid.pause();
+  } else {
+    const vid = $showcase.querySelector(".slide.active video");
+    if (vid) {
+      vid.play().catch(() => {});
+    } else {
+      // Resume timer for remaining time
+      const elapsed = performance.now() - progressStart;
+      const remaining = Math.max(progressDuration - elapsed, 500);
+      timer = setTimeout(showNext, remaining);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// KEYBOARD CONTROLS
+// ═══════════════════════════════════════════════════════════
+document.addEventListener("keydown", (e) => {
+  if (e.key === " " || e.key === "p") { e.preventDefault(); togglePause(); }
+  if (e.key === "ArrowRight" || e.key === "n") showNext();
+  if (e.key === "ArrowLeft"  || e.key === "b") showPrev();
+  if (e.key === "f") {
+    document.documentElement.requestFullscreen?.() ||
+    document.documentElement.webkitRequestFullscreen?.();
+  }
+});
+
+// Also allow click/touch to pause
+document.addEventListener("click", togglePause);
+
+// ═══════════════════════════════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  const h = now.getHours();
+  const m = String(now.getMinutes()).padStart(2, "0");
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  $clock.textContent = `${h12}:${m} ${ampm}`;
+}
+updateClock();
+setInterval(updateClock, 10000);
+
+// ═══════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+fetchSlides();
+setInterval(fetchSlides, CONFIG.refreshMinutes * 60 * 1000);
+</script>
+</body>
+</html>

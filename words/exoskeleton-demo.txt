@@ -1,0 +1,1 @@
+EduExo Pro exoskeleton used in EECE 5552 Assistive Robotics for teaching upper-limb biomechanics and EMG-driven control. Students map exoskeleton joint angles to the UR12e collaborative robot arm.

@@ -1,0 +1,1 @@
+UR12e collaborative robot arm with PincherX 100 leader arm for teleoperation research. Part of the VLA fine-tuning project exploring vision-language-action models for dexterous manipulation tasks.
