@@ -5,6 +5,8 @@ A file-driven slideshow for lab big screens. Drop photos and videos into folders
 ![Python 3](https://img.shields.io/badge/python-3.8%2B-blue)
 ![No Dependencies](https://img.shields.io/badge/dependencies-none-green)
 
+<video src="example-720p.mp4" autoplay loop muted playsinline width="100%"></video>
+
 ## Quick Start
 
 ```bash
